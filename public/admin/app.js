@@ -1,6 +1,57 @@
 // API base URL
 const API_BASE = '/api';
 
+// Toast notification system
+function showToast(message, type = 'info', duration = 4000) {
+  // Create container if it doesn't exist
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+
+  // Add to container
+  container.appendChild(toast);
+
+  // Auto remove after duration
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease-in';
+    setTimeout(() => {
+      toast.remove();
+      // Remove container if empty
+      if (container.children.length === 0) {
+        container.remove();
+      }
+    }, 300);
+  }, duration);
+}
+
+// Generate random short code
+function generateRandomCode(length = 6) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// Extract domain from URL
+function extractDomain(url) {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname;
+  } catch {
+    return url;
+  }
+}
+
 // Load URLs on page load
 document.addEventListener('DOMContentLoaded', () => {
   loadUrls();
@@ -8,6 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Setup form handlers
   document.getElementById('addUrlForm').addEventListener('submit', handleAddUrl);
   document.getElementById('editUrlForm').addEventListener('submit', handleEditUrl);
+
+  // Setup random code generator button
+  const randomBtn = document.getElementById('randomCodeBtn');
+  if (randomBtn) {
+    randomBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('shortCode').value = generateRandomCode();
+    });
+  }
 });
 
 // Load all URLs
@@ -48,22 +108,35 @@ async function loadUrls() {
         </td>
         <td>
           <a href="${escapeHtml(url.target_url)}" target="_blank" class="target-url" title="${escapeHtml(url.target_url)}">
-            ${escapeHtml(url.target_url)}
+            ${extractDomain(url.target_url)}
           </a>
         </td>
         <td>${url.description ? escapeHtml(url.description) : '<span style="color: #bdc3c7;">—</span>'}</td>
         <td class="click-count">${url.click_count || 0}</td>
         <td class="date">${formatDate(url.created_at)}</td>
         <td>
-          <button class="btn btn-small btn-edit" onclick="openEditModal(${url.id}, '${escapeHtml(url.short_code)}', '${escapeHtml(url.target_url)}', '${escapeHtml(url.description || '')}')">
-            Upravit
-          </button>
-          <button class="btn btn-small btn-stats" onclick="openStatsModal(${url.id}, '${escapeHtml(url.short_code)}')">
-            Stats
-          </button>
-          <button class="btn btn-small btn-delete" onclick="handleDeleteUrl(${url.id}, '${escapeHtml(url.short_code)}')">
-            Smazat
-          </button>
+          <div class="action-buttons">
+            <button class="action-btn action-btn-qr" onclick="openQRCode('${escapeHtml(url.short_code)}')" title="Zobrazit QR kód">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </button>
+            <button class="action-btn action-btn-edit" onclick="openEditModal(${url.id}, '${escapeHtml(url.short_code)}', '${escapeHtml(url.target_url)}', '${escapeHtml(url.description || '')}')" title="Upravit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="action-btn action-btn-delete" onclick="handleDeleteUrl(${url.id}, '${escapeHtml(url.short_code)}')" title="Smazat">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -99,18 +172,18 @@ async function handleAddUrl(e) {
 
     if (!response.ok) {
       const error = await response.json();
-      alert(`Chyba: ${error.error}`);
+      showToast(`Chyba: ${error.error}`, 'error');
       return;
     }
 
     // Success
     e.target.reset();
     await loadUrls();
-    alert('URL mapping úspěšně vytvořen!');
+    showToast('URL mapping úspěšně vytvořen!', 'success');
 
   } catch (error) {
     console.error('Create error:', error);
-    alert('Chyba při vytváření URL mappingu. Zkuste to znovu.');
+    showToast('Chyba při vytváření URL mappingu. Zkuste to znovu.', 'error');
   }
 }
 
@@ -147,18 +220,18 @@ async function handleEditUrl(e) {
 
     if (!response.ok) {
       const error = await response.json();
-      alert(`Chyba: ${error.error}`);
+      showToast(`Chyba: ${error.error}`, 'error');
       return;
     }
 
     // Success
     closeEditModal();
     await loadUrls();
-    alert('URL mapping úspěšně upraven!');
+    showToast('URL mapping úspěšně upraven!', 'success');
 
   } catch (error) {
     console.error('Update error:', error);
-    alert('Chyba při úpravě URL mappingu. Zkuste to znovu.');
+    showToast('Chyba při úpravě URL mappingu. Zkuste to znovu.', 'error');
   }
 }
 
@@ -175,17 +248,17 @@ async function handleDeleteUrl(id, shortCode) {
 
     if (!response.ok) {
       const error = await response.json();
-      alert(`Chyba: ${error.error}`);
+      showToast(`Chyba: ${error.error}`, 'error');
       return;
     }
 
     // Success
     await loadUrls();
-    alert('URL mapping smazán.');
+    showToast('URL mapping smazán.', 'success');
 
   } catch (error) {
     console.error('Delete error:', error);
-    alert('Chyba při mazání URL mappingu. Zkuste to znovu.');
+    showToast('Chyba při mazání URL mappingu. Zkuste to znovu.', 'error');
   }
 }
 
@@ -254,4 +327,11 @@ function formatDate(dateString) {
     hour: '2-digit',
     minute: '2-digit'
   });
+}
+
+// Open QR Code for short URL
+function openQRCode(shortCode) {
+  const url = `${window.location.origin}/${shortCode}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+  window.open(qrUrl, '_blank');
 }

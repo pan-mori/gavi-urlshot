@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Kódy - Vizualizace</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>QR Kódy</h1>
+      <a href="/admin" class="btn-admin">Admin</a>
+    </div>
+
+    <div id="loadingMessage" class="loading">Načítám QR kódy...</div>
+    <div id="errorMessage" class="error" style="display: none;"></div>
+
+    <div id="qrGrid" class="qr-grid" style="display: none;">
+      <!-- QR codes will be inserted here -->
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

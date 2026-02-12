@@ -8,10 +8,9 @@
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>🔗 URL Shortener Admin</h1>
-      <p class="subtitle">Správa zkrácených URL pro QR kódy</p>
-    </header>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+      <a href="/qr" class="btn btn-secondary" style="text-decoration: none;">Vizualizace QR kódů</a>
+    </div>
 
     <!-- Add New URL Form -->
     <section class="add-url-section">
@@ -22,14 +21,20 @@
             Krátký kód *
             <span class="hint">(3-20 znaků, pouze a-z, A-Z, 0-9, _, -)</span>
           </label>
-          <input
-            type="text"
-            id="shortCode"
-            name="short_code"
-            required
-            pattern="[a-zA-Z0-9_-]{3,20}"
-            placeholder="např. abc, spotify2024"
-          >
+          <div style="display: flex; gap: 10px;">
+            <button type="button" id="randomCodeBtn" class="btn btn-secondary" style="white-space: nowrap;">
+              Náhodný
+            </button>
+            <input
+              type="text"
+              id="shortCode"
+              name="short_code"
+              required
+              pattern="[a-zA-Z0-9_-]{3,20}"
+              placeholder="např. abc, spotify2024"
+              style="flex: 1;"
+            >
+          </div>
         </div>
 
         <div class="form-group">

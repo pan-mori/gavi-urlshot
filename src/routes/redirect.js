@@ -63,7 +63,7 @@ router.get('/:shortCode', async (req, res) => {
     });
 
     // Redirect to target URL
-    res.redirect(302, url.target_url);
+    res.redirect(302, url.targetUrl);
 
   } catch (error) {
     console.error('Redirect error:', error);

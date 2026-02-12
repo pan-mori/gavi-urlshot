@@ -1,0 +1,32 @@
+// Prisma schema pro Vercel Prisma Postgres
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model Url {
+  id          Int      @id @default(autoincrement())
+  shortCode   String   @unique @map("short_code")
+  targetUrl   String   @map("target_url")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  clicks      Click[]
+
+  @@map("urls")
+}
+
+model Click {
+  id        Int      @id @default(autoincrement())
+  urlId     Int      @map("url_id")
+  clickedAt DateTime @default(now()) @map("clicked_at")
+  userAgent String?  @map("user_agent")
+  referrer  String?
+  url       Url      @relation(fields: [urlId], references: [id], onDelete: Cascade)
+
+  @@index([urlId])
+  @@index([clickedAt])
+  @@map("clicks")
+}
