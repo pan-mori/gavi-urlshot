@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URL Shortener Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔗 URL Shortener Admin</h1>
+      <p class="subtitle">Správa zkrácených URL pro QR kódy</p>
+    </header>
+
+    <!-- Add New URL Form -->
+    <section class="add-url-section">
+      <h2>Přidat nový mapping</h2>
+      <form id="addUrlForm">
+        <div class="form-group">
+          <label for="shortCode">
+            Krátký kód *
+            <span class="hint">(3-20 znaků, pouze a-z, A-Z, 0-9, _, -)</span>
+          </label>
+          <input
+            type="text"
+            id="shortCode"
+            name="short_code"
+            required
+            pattern="[a-zA-Z0-9_-]{3,20}"
+            placeholder="např. abc, spotify2024"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="targetUrl">
+            Cílová URL *
+            <span class="hint">(musí začínat http:// nebo https://)</span>
+          </label>
+          <input
+            type="url"
+            id="targetUrl"
+            name="target_url"
+            required
+            placeholder="https://youtube.com/watch?v=..."
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="description">
+            Popis
+            <span class="hint">(volitelné)</span>
+          </label>
+          <input
+            type="text"
+            id="description"
+            name="description"
+            placeholder="např. YouTube - Hlavní video"
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary">Vytvořit</button>
+      </form>
+    </section>
+
+    <!-- URLs List -->
+    <section class="urls-section">
+      <h2>Existující mappingy</h2>
+      <div id="loadingMessage" class="loading">Načítám...</div>
+      <div id="errorMessage" class="error" style="display: none;"></div>
+
+      <table id="urlsTable" style="display: none;">
+        <thead>
+          <tr>
+            <th>Krátký kód</th>
+            <th>Cílová URL</th>
+            <th>Popis</th>
+            <th>Kliknutí</th>
+            <th>Vytvořeno</th>
+            <th>Akce</th>
+          </tr>
+        </thead>
+        <tbody id="urlsTableBody">
+          <!-- URLs will be inserted here -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h2>Upravit mapping</h2>
+        <form id="editUrlForm">
+          <input type="hidden" id="editUrlId">
+
+          <div class="form-group">
+            <label>Krátký kód (nelze měnit)</label>
+            <input type="text" id="editShortCode" disabled>
+          </div>
+
+          <div class="form-group">
+            <label for="editTargetUrl">Cílová URL *</label>
+            <input
+              type="url"
+              id="editTargetUrl"
+              required
+              placeholder="https://..."
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="editDescription">Popis</label>
+            <input
+              type="text"
+              id="editDescription"
+              placeholder="Volitelný popis"
+            >
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="btn btn-primary">Uložit</button>
+            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Zrušit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="statsModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h2>Statistiky prokliků</h2>
+        <div id="statsContent">
+          <p class="loading">Načítám statistiky...</p>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeStatsModal()">Zavřít</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

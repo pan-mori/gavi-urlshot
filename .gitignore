@@ -1,0 +1,9 @@
+node_modules/
+db/database.sqlite
+db/database.sqlite-shm
+db/database.sqlite-wal
+.env
+.env.local
+.vercel
+*.log
+.DS_Store
