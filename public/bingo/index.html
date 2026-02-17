@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARGUMENTAČNÍ FOUL BINGO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --red: #E63946;
+            --yellow: #FFD60A;
+            --green: #06D6A0;
+            --dark: #1A1A1A;
+            --white: #F8F9FA;
+            --gray: #6C757D;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--dark);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        header {
+            background: var(--red);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 8px solid var(--yellow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(50%); }
+        }
+
+        h1 {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: clamp(2rem, 8vw, 5rem);
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            line-height: 0.9;
+            text-shadow: 4px 4px 0 var(--dark);
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+
+        .big-button {
+            background: var(--white);
+            color: var(--dark);
+            border: 4px solid var(--dark);
+            padding: 2rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            box-shadow: 8px 8px 0 var(--dark);
+        }
+
+        .big-button:hover {
+            transform: translate(4px, 4px);
+            box-shadow: 4px 4px 0 var(--dark);
+        }
+
+        .big-button.red {
+            background: var(--red);
+            color: var(--white);
+        }
+
+        .big-button.yellow {
+            background: var(--yellow);
+            color: var(--dark);
+        }
+
+        .big-button.green {
+            background: var(--green);
+            color: var(--dark);
+        }
+
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            max-width: 600px;
+            margin: 2rem auto;
+            background: var(--dark);
+            padding: 1rem;
+            border: 6px solid var(--yellow);
+            box-shadow: 12px 12px 0 var(--red);
+        }
+
+        .bingo-cell {
+            aspect-ratio: 1;
+            background: var(--white);
+            color: var(--dark);
+            border: 3px solid var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.5rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .bingo-cell:hover:not(.crossed) {
+            background: var(--yellow);
+            transform: scale(1.05);
+        }
+
+        .bingo-cell.crossed {
+            background: var(--red);
+            color: var(--white);
+        }
+
+        .bingo-cell.crossed::after {
+            content: '✗';
+            position: absolute;
+            font-size: 3rem;
+            font-weight: 700;
+            animation: cross 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes cross {
+            from {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .foul-list {
+            display: grid;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .foul-item {
+            background: var(--white);
+            color: var(--dark);
+            padding: 1.5rem;
+            border: 3px solid var(--dark);
+            border-left: 12px solid var(--red);
+        }
+
+        .foul-item.used {
+            opacity: 0.5;
+            background: var(--gray);
+            color: var(--white);
+            text-decoration: line-through;
+        }
+
+        .foul-item h3 {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .foul-item p {
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .foul-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+        }
+
+        .foul-checkbox input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: var(--red);
+        }
+
+        .win-banner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: var(--yellow);
+            color: var(--dark);
+            padding: 3rem;
+            border: 8px solid var(--dark);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            text-align: center;
+            animation: winPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+
+        @keyframes winPop {
+            to {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .win-banner h2 {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .nav-button {
+            background: var(--dark);
+            color: var(--white);
+            border: 3px solid var(--white);
+            padding: 1rem 2rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .nav-button:hover {
+            background: var(--white);
+            color: var(--dark);
+        }
+
+        .rules {
+            background: var(--white);
+            color: var(--dark);
+            padding: 2rem;
+            border: 6px solid var(--dark);
+            margin: 2rem 0;
+            line-height: 1.8;
+        }
+
+        .rules h2 {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 4px solid var(--red);
+            padding-bottom: 0.5rem;
+        }
+
+        .rules h3 {
+            font-weight: 700;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--red);
+        }
+
+        .rules ul {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-bar {
+            display: flex;
+            justify-content: space-around;
+            background: var(--dark);
+            border: 4px solid var(--green);
+            padding: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 2.5rem;
+            color: var(--green);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 768px) {
+            .bingo-grid {
+                gap: 0.3rem;
+                padding: 0.5rem;
+            }
+
+            .bingo-cell {
+                font-size: 0.5rem;
+                padding: 0.2rem;
+            }
+
+            .big-button {
+                padding: 1.5rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Cheatsheet styles */
+        .cheatsheet-nav {
+            position: sticky;
+            top: 0;
+            background: var(--dark);
+            border: 4px solid var(--yellow);
+            padding: 1rem;
+            margin-bottom: 2rem;
+            z-index: 100;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cheatsheet-nav a {
+            background: var(--white);
+            color: var(--dark);
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 2px solid var(--dark);
+            transition: all 0.2s;
+        }
+
+        .cheatsheet-nav a:hover {
+            background: var(--yellow);
+        }
+
+        .cheatsheet-section {
+            background: var(--white);
+            color: var(--dark);
+            padding: 2rem;
+            border: 6px solid var(--dark);
+            margin: 2rem 0;
+            scroll-margin-top: 150px;
+        }
+
+        .cheatsheet-section h2 {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 6px solid var(--red);
+            text-transform: uppercase;
+        }
+
+        .technique-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .technique-table th {
+            background: var(--red);
+            color: var(--white);
+            padding: 1rem;
+            text-align: left;
+            font-family: 'Archivo Black', sans-serif;
+            border: 3px solid var(--dark);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .technique-table td {
+            padding: 1rem;
+            border: 2px solid var(--dark);
+            vertical-align: top;
+        }
+
+        .technique-table tr:nth-child(even) {
+            background: rgba(255, 214, 10, 0.1);
+        }
+
+        .technique-table tr:hover {
+            background: rgba(6, 214, 160, 0.2);
+        }
+
+        .technique-name {
+            font-weight: 700;
+            color: var(--red);
+            font-size: 1rem;
+        }
+
+        .latin-name {
+            font-style: italic;
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        .defense-box {
+            background: var(--green);
+            color: var(--dark);
+            padding: 2rem;
+            border: 6px solid var(--dark);
+            margin: 2rem 0;
+        }
+
+        .defense-box h3 {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .defense-box ul {
+            margin-left: 2rem;
+            line-height: 1.8;
+        }
+
+        .defense-box strong {
+            color: var(--dark);
+        }
+
+        @media (max-width: 768px) {
+            .cheatsheet-nav {
+                font-size: 0.7rem;
+            }
+
+            .technique-table {
+                font-size: 0.75rem;
+            }
+
+            .technique-table th,
+            .technique-table td {
+                padding: 0.5rem;
+            }
+
+            .cheatsheet-section {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+    
+    <header>
+        <h1>ARGUMENTAČNÍ<br>FOUL BINGO</h1>
+        <div class="subtitle">Detekuj logické fauly. Vyhraj debatu.</div>
+    </header>
+
+    <!-- Home Screen -->
+    <div class="screen active" id="home-screen">
+        <div class="container">
+            <div class="button-grid">
+                <button class="big-button red" onclick="startDefender()">
+                    OBHÁJCE
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem; font-weight: 400;">
+                        Používej fauly<br>Vyhni se odhalení
+                    </div>
+                </button>
+                <button class="big-button green" onclick="startDetective()">
+                    DETEKTIV
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem; font-weight: 400;">
+                        Hledej fauly<br>Získej bingo
+                    </div>
+                </button>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <button class="nav-button" onclick="showScreen('rules-screen')">PRAVIDLA HRY</button>
+                <button class="nav-button" onclick="showScreen('fouls-screen')">SEZNAM FAULŮ</button>
+                <button class="nav-button yellow" onclick="showScreen('cheatsheet-screen')" style="background: var(--yellow); color: var(--dark); border-color: var(--dark);">📖 CHEATSHEET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Defender Screen -->
+    <div class="screen" id="defender-screen">
+        <div class="container">
+            <h2 style="font-family: 'Archivo Black', sans-serif; font-size: 2.5rem; margin-bottom: 2rem; text-align: center; color: var(--red);">
+                OBHÁJCE: TVOJE MISE
+            </h2>
+
+            <div class="rules">
+                <p><strong>Tvůj cíl:</strong> Obhajuj svou (absurdní) tezi a používej co nejvíce argumentačních faulů, aniž by tě detektivové odhalili!</p>
+                <p style="margin-top: 1rem;"><strong>Škrtni fauly, které jsi úspěšně použil:</strong></p>
+            </div>
+
+            <div id="defender-fouls" class="foul-list"></div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="nav-button" onclick="showScreen('home-screen')">← ZPĚT NA HLAVNÍ MENU</button>
+                <button class="nav-button" onclick="resetDefender()">🔄 RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detective Screen -->
+    <div class="screen" id="detective-screen">
+        <div class="container">
+            <h2 style="font-family: 'Archivo Black', sans-serif; font-size: 2.5rem; margin-bottom: 1rem; text-align: center; color: var(--green);">
+                DETEKTIV: TVOJE KARTA
+            </h2>
+
+            <div class="stat-bar">
+                <div class="stat">
+                    <div class="stat-number" id="crossed-count">0</div>
+                    <div class="stat-label">Odhaleno</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="remaining-count">25</div>
+                    <div class="stat-label">Zbývá</div>
+                </div>
+            </div>
+
+            <div class="bingo-grid" id="bingo-grid"></div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="nav-button" onclick="showScreen('home-screen')">← ZPĚT NA HLAVNÍ MENU</button>
+                <button class="nav-button" onclick="resetBingo()">🔄 NOVÁ KARTA</button>
+                <button class="nav-button" onclick="showScreen('fouls-screen')">📖 NÁPOVĚDA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Screen -->
+    <div class="screen" id="rules-screen">
+        <div class="container">
+            <div class="rules">
+                <h2>PRAVIDLA HRY</h2>
+                
+                <h3>📋 Příprava</h3>
+                <ul>
+                    <li>Vyberte 1 osobu jako <strong>OBHÁJCE</strong></li>
+                    <li>Ostatní jsou <strong>DETEKTIVOVÉ</strong></li>
+                    <li>Obhájce dostane absurdní tezi k obhajobě (např. "Země je plochá", "Ananas patří na pizzu")</li>
+                    <li>Každý detektiv si vygeneruje svou unikátní bingo kartičku</li>
+                </ul>
+
+                <h3>🎯 Cíl hry</h3>
+                <ul>
+                    <li><strong>Obhájce:</strong> Použít co nejvíce argumentačních faulů, aniž by byly odhaleny</li>
+                    <li><strong>Detektiv:</strong> Jako první získat 5 faulů v řadě (vodorovně, svisle nebo diagonálně)</li>
+                </ul>
+
+                <h3>🎮 Průběh</h3>
+                <ul>
+                    <li>Obhájce prezentuje svou tezi a začíná debatu</li>
+                    <li>Volná diskuse - obhájce záměrně používá logické fauly</li>
+                    <li>Když detektiv odhalí foul, nahláší: <strong>"STOP! [Název faulu]!"</strong></li>
+                    <li>První správná identifikace = škrtnutí na kartě</li>
+                    <li>Pokračuje se, dokud někdo nezíská bingo</li>
+                </ul>
+
+                <h3>🏆 Vítězství</h3>
+                <ul>
+                    <li>Detektiv vyhrává získáním 5 faulů v řadě</li>
+                    <li>Vítězný detektiv se stává <strong>obhájcem v příštím kole</strong></li>
+                </ul>
+
+                <h3>💡 Tipy</h3>
+                <ul>
+                    <li>Obhájci: Buďte kreativní, kombinujte fauly, nebuďte moc zjevní</li>
+                    <li>Detektivové: Poslouchejte pozorně, znáte definice všech faulů?</li>
+                    <li>Sporné případy řeší moderátor nebo skupina hlasováním</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="nav-button" onclick="showScreen('home-screen')">← ZPĚT NA HLAVNÍ MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fouls Reference Screen -->
+    <div class="screen" id="fouls-screen">
+        <div class="container">
+            <h2 style="font-family: 'Archivo Black', sans-serif; font-size: 2.5rem; margin-bottom: 2rem; text-align: center;">
+                SEZNAM ARGUMENTAČNÍCH FAULŮ
+            </h2>
+
+            <div id="all-fouls-list" class="foul-list"></div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="nav-button" onclick="showScreen('home-screen')">← ZPĚT NA HLAVNÍ MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cheatsheet Screen -->
+    <div class="screen" id="cheatsheet-screen">
+        <div class="container">
+            <h1 style="font-family: 'Archivo Black', sans-serif; font-size: clamp(2rem, 6vw, 3.5rem); margin-bottom: 1rem; text-align: center; color: var(--yellow); text-shadow: 3px 3px 0 var(--red);">
+                CHEAT SHEET
+            </h1>
+            <p style="text-align: center; margin-bottom: 2rem; font-size: 1.1rem;">Kompletní průvodce argumentačními fauly a manipulačními technikami</p>
+
+            <!-- Navigation -->
+            <div class="cheatsheet-nav">
+                <a href="#emoce">Emoce</a>
+                <a href="#rozum">Rozum</a>
+                <a href="#pricina">Chybná příčina</a>
+                <a href="#vyvozeni">Chybné vyvození</a>
+                <a href="#osoba">Útok na osobu</a>
+                <a href="#obsah">Manipulace s obsahem</a>
+                <a href="#psycho">Psychologické</a>
+                <a href="#propaganda">Propaganda</a>
+                <a href="#dezinfo">Dezinformace</a>
+                <a href="#obrana">Obrana</a>
+            </div>
+
+            <!-- EMOCE -->
+            <div class="cheatsheet-section" id="emoce">
+                <h2>📢 Důraz na emoce</h2>
+                <table class="technique-table">
+                    <thead>
+                        <tr>
+                            <th>Technika</th>
+                            <th>Popis</th>
+                            <th>Příklad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="technique-name">Apel na strach</span><br><span class="latin-name">Argumentum ad metum</span></td>
+                            <td>Vytváření strachu místo logické argumentace</td>
+                            <td>"Pokud nezavedeme tuto politiku, přijdou teroristé a všichni zemřeme!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Apel na nenávist</span><br><span class="latin-name">Argumentum ad odium</span></td>
+                            <td>Vyvolávání nenávisti vůči skupině nebo osobě</td>
+                            <td>"Oni nám berou práci a ničí naši kulturu - musíme je zastavit!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Apel na lítost</span><br><span class="latin-name">Argumentum ad misericordiam</span></td>
+                            <td>Vyvolávání soucitu místo důkazů</td>
+                            <td>"Nemohu dostat špatnou známku, rodiče mě vyhodí z domu!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Apel na pýchu</span><br><span class="latin-name">Argumentum ad superbiam</span></td>
+                            <td>Lichotky, vyvolání pocitu výjimečnosti</td>
+                            <td>"Někdo tak inteligentní jako vy jistě chápe, že toto je jediné správné řešení."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Apel na závist</span><br><span class="latin-name">Argumentum ad invidiam</span></td>
+                            <td>Vyvolání závisti vůči někomu úspěšnému</td>
+                            <td>"Ten boháč má vše, co si může dovolit, zatímco my trpíme - vezměme mu to!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Apel na tradici</span><br><span class="latin-name">Argumentum ad antiquitatem</span></td>
+                            <td>"Vždycky se to dělalo tak"</td>
+                            <td>"Manželství bylo vždy mezi mužem a ženou, proč to měnit?"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Apel na novinku</span><br><span class="latin-name">Argumentum ad novitatem</span></td>
+                            <td>"Je to nové, takže lepší"</td>
+                            <td>"Tento produkt používá nejnovější technologii, musí být nejlepší!"</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ROZUM -->
+            <div class="cheatsheet-section" id="rozum">
+                <h2>🧠 Důraz na rozum</h2>
+                <table class="technique-table">
+                    <thead>
+                        <tr>
+                            <th>Technika</th>
+                            <th>Popis</th>
+                            <th>Příklad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="technique-name">Falešné dilema</span><br><span class="latin-name">Tertium non datur</span></td>
+                            <td>Pouze 2 možnosti, i když jich je víc</td>
+                            <td>"Buď jsi s námi, nebo proti nám!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Apel na autoritu</span><br><span class="latin-name">Argumentum ad verecundiam</span></td>
+                            <td>Odkaz na autoritu mimo její obor</td>
+                            <td>"Einstein byl génius, takže jeho názor na ekonomiku musí být správný."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Apel na většinu</span><br><span class="latin-name">Argumentum ad populum</span></td>
+                            <td>"Většina lidí si to myslí"</td>
+                            <td>"90% lidí věří na duchy, takže asi existují."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Apel na nevědomost</span><br><span class="latin-name">Argumentum ad ignorantiam</span></td>
+                            <td>Neexistence důkazu = důkaz opaku</td>
+                            <td>"Nikdo nedokázal, že UFO neexistují, takže asi existují."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Dvojsmysl</span><br><span class="latin-name">Aequivocatio</span></td>
+                            <td>Záměna významu slova</td>
+                            <td>"Všichni lékaři jsou doktory. Mám titul doktor, jsem tedy lékař."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Zavádějící otázka</span><br><span class="latin-name">Loaded question</span></td>
+                            <td>Otázka obsahující předpoklad</td>
+                            <td>"Už jste přestal bít svou ženu?" (předpokládá, že jste ji bil)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Kluzký svah</span><br><span class="latin-name">Slippery slope</span></td>
+                            <td>Řetězec nepodložených následků</td>
+                            <td>"Pokud legalizujeme marihuanu, pak přijdou těžké drogy, zločin a konec společnosti!"</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CHYBNÁ PŘÍČINA -->
+            <div class="cheatsheet-section" id="pricina">
+                <h2>🔗 Chybná příčina</h2>
+                <table class="technique-table">
+                    <thead>
+                        <tr>
+                            <th>Technika</th>
+                            <th>Popis</th>
+                            <th>Příklad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="technique-name">Po tom, tedy kvůli tomu</span><br><span class="latin-name">Post hoc ergo propter hoc</span></td>
+                            <td>Časová posloupnost ≠ příčina</td>
+                            <td>"Když vyšel ven, začalo pršet. On způsobil déšť!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Korelace = příčina</span><br><span class="latin-name">Cum hoc ergo propter hoc</span></td>
+                            <td>Současný výskyt ≠ příčinný vztah</td>
+                            <td>"Prodej zmrzliny roste s počtem utonutí, zmrzlina způsobuje utonutí!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Chybná příčina</span><br><span class="latin-name">Non causa pro causa</span></td>
+                            <td>Označení nesprávné příčiny</td>
+                            <td>"Musím sníst chleba, protože musím rozdělat oheň v peci."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Vyvrácení příčiny</span><br><span class="latin-name">Negation of cause</span></td>
+                            <td>Pokud není příčina, není ani následek</td>
+                            <td>"Nerozděláme oheň, takže nemůžeme upéct chleba." (lze i jinak)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Potvrzení účinku</span><br><span class="latin-name">Affirmation of consequent</span></td>
+                            <td>Z účinku vyvození jediné možné příčiny</td>
+                            <td>"Babička rozdělala oheň, takže určitě peče chleba."</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CHYBNÉ VYVOZENÍ -->
+            <div class="cheatsheet-section" id="vyvozeni">
+                <h2>⚠️ Chybné vyvození</h2>
+                <table class="technique-table">
+                    <thead>
+                        <tr>
+                            <th>Technika</th>
+                            <th>Popis</th>
+                            <th>Příklad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="technique-name">Zbrklé zobecnění</span><br><span class="latin-name">Hasty generalization</span></td>
+                            <td>Závěr z malého vzorku</td>
+                            <td>"Potkal jsem 2 lháře z Prahy, všichni Pražáci jsou lháři!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Chybná analogie</span><br><span class="latin-name">False analogy</span></td>
+                            <td>Nepřiměřené srovnání</td>
+                            <td>"Mozek je jako počítač, takže můžeme nahradit paměť tvrdým diskem."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Kompozice</span><br><span class="latin-name">Composition</span></td>
+                            <td>Vlastnost části = vlastnost celku</td>
+                            <td>"Každý atlet je silný, takže celý tým je silný."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Divize</span><br><span class="latin-name">Division</span></td>
+                            <td>Vlastnost celku = vlastnost části</td>
+                            <td>"Tým je skvělý, takže každý hráč musí být skvělý."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Dokonalá řešení</span><br><span class="latin-name">Nirvana fallacy</span></td>
+                            <td>Odmítnutí řešení, protože není dokonalé</td>
+                            <td>"Bezpečnostní pásy nezachrání všechny, tak je nebudeme používat!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Cherry picking</span><br><span class="latin-name">Cherry picking</span></td>
+                            <td>Výběr jen potvrzujících dat</td>
+                            <td>"Tento jeden člověk se uzdravil homeopatií, homeopatie funguje!"</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ÚTOK NA OSOBU -->
+            <div class="cheatsheet-section" id="osoba">
+                <h2>👤 Útok na osobu</h2>
+                <table class="technique-table">
+                    <thead>
+                        <tr>
+                            <th>Technika</th>
+                            <th>Popis</th>
+                            <th>Příklad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="technique-name">Ad hominem urážlivé</span><br><span class="latin-name">Ad hominem abusive</span></td>
+                            <td>Útok na osobu místo argumentu</td>
+                            <td>"Tvé argumenty jsou nesmysl, protože jsi idiot!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Ad hominem okolnostní</span><br><span class="latin-name">Ad hominem circumstantial</span></td>
+                            <td>Útok na motivy nebo okolnosti</td>
+                            <td>"Samozřejmě, že jsi proti kouření, jsi lékař a z toho žiješ!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Tu quoque</span><br><span class="latin-name">Tu quoque</span></td>
+                            <td>"Ty taky!" - odvracení pozornosti</td>
+                            <td>"Ano, lhal jsem, ale ty jsi taky někdy lhal!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Otrava studny</span><br><span class="latin-name">Poisoning the well</span></td>
+                            <td>Diskreditace předem</td>
+                            <td>"Než poslechnete mého oponenta, vězte, že je placený lobbysta."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Útok na mládí/stáří</span><br><span class="latin-name">Ad hominem</span></td>
+                            <td>Diskreditace kvůli věku</td>
+                            <td>"Jsi příliš mladý/starý na to, abys tomu rozuměl."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Vina asociací</span><br><span class="latin-name">Guilt by association</span></td>
+                            <td>Diskreditace kvůli spojení</td>
+                            <td>"Hitler byl vegetarián, takže vegetariáni jsou zlí!"</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- MANIPULACE S OBSAHEM -->
+            <div class="cheatsheet-section" id="obsah">
+                <h2>🎭 Manipulace s obsahem</h2>
+                <table class="technique-table">
+                    <thead>
+                        <tr>
+                            <th>Technika</th>
+                            <th>Popis</th>
+                            <th>Příklad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="technique-name">Straw man</span><br><span class="latin-name">Straw man</span></td>
+                            <td>Zkreslení argumentu oponenta</td>
+                            <td>"Chceš pomoci chudým? Takže chceš komunismus!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Red herring</span><br><span class="latin-name">Red herring</span></td>
+                            <td>Odvedení pozornosti jinam</td>
+                            <td>"Proč řešíme klima, když máme problémy s ekonomikou?"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Přesun důkazního břemene</span><br><span class="latin-name">Shifting burden of proof</span></td>
+                            <td>"Dokažte, že se mýlím"</td>
+                            <td>"Říkám, že existují duchové. Ty dokažte, že ne!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Logický kruh</span><br><span class="latin-name">Circular reasoning</span></td>
+                            <td>Závěr = předpoklad</td>
+                            <td>"Bible je pravda, protože to říká Bible."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Dvě minus dělají plus</span><br><span class="latin-name">Tu quoque variant</span></td>
+                            <td>Jedna špatnost ospravedlňuje druhou</td>
+                            <td>"Ano, kradl jsem, ale on taky krade!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Klamající vzhled</span><br><span class="latin-name">Appeal to nature</span></td>
+                            <td>Pěkné = pravdivé</td>
+                            <td>"V tak krásné chaloupce musí bydlet hodní lidé."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Texas Sharpshooter</span><br><span class="latin-name">Texas sharpshooter</span></td>
+                            <td>Vybírání vzorců ex post</td>
+                            <td>Vystřelí do stodoly, pak nakreslí terč kolem díry.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PSYCHOLOGICKÉ -->
+            <div class="cheatsheet-section" id="psycho">
+                <h2>🧠 Psychologické manipulační techniky</h2>
+                <table class="technique-table">
+                    <thead>
+                        <tr>
+                            <th>Technika</th>
+                            <th>Popis</th>
+                            <th>Příklad použití</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="technique-name">Gaslighting</span></td>
+                            <td>Systematické zpochybňování reality oběti</td>
+                            <td>"To se nikdy nestalo, ty si to vymýšlíš. Jsi přecitlivělá."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Love bombing</span></td>
+                            <td>Záplava pozornosti na začátku, vytvoření závislosti</td>
+                            <td>"Jsi ten nejúžasnější člověk. Nemůžu bez tebe žít."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Guilt tripping</span></td>
+                            <td>Vyvolávání pocitů viny pro získání kontroly</td>
+                            <td>"Po všem, co jsem pro tebe udělal... a ty mě takhle zklamáváš?"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Silent treatment</span></td>
+                            <td>Mlčení jako forma trestu a kontroly</td>
+                            <td>Ignorování oběti, nezvedání telefonu, jako by neexistovala.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Triangulace</span></td>
+                            <td>Zapojení třetí osoby do konfliktu</td>
+                            <td>"Tvoje sestra si také myslí, že jsi špatná matka."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Playing the victim</span></td>
+                            <td>Manipulátor se staví do role oběti</td>
+                            <td>"Ty mě vždycky napadáš! Já se jen snažím pomoci!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Projection</span></td>
+                            <td>Přisuzování vlastních negativních vlastností ostatním</td>
+                            <td>Nevěrník obviňuje partnera z nevěry.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">DARVO</span></td>
+                            <td>Deny, Attack, Reverse Victim and Offender</td>
+                            <td>"Já jsem oběť! Ty jsi agresor!" (když je to naopak)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Hoovering</span></td>
+                            <td>Nasávání zpět do vztahu po odchodu</td>
+                            <td>"Změním se! Odpusť mi! Už to neudělám!" - pak se opakuje abuse.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Breadcrumbing</span></td>
+                            <td>Malé dávky pozornosti, aby oběť zůstala</td>
+                            <td>Občasná zpráva, aby oběť nezapomněla a zůstala k dispozici.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Negging</span></td>
+                            <td>Podprahové ponižování pod rouškou komplimentu</td>
+                            <td>"Vypadáš dobře, jak na tvé poměry."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Stonewalling</span></td>
+                            <td>Odmítání komunikace, stavění zdi</td>
+                            <td>Odchod z místnosti, zavírání se, odmítání mluvit.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Blame shifting</span></td>
+                            <td>Přesun viny na oběť</td>
+                            <td>"Mám tak výbušnou povahu kvůli tobě!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Emotional blackmail</span></td>
+                            <td>Emocionální vydírání</td>
+                            <td>"Když mě opustíš, zabiju se!"</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PROPAGANDA -->
+            <div class="cheatsheet-section" id="propaganda">
+                <h2>📣 Propagandistické techniky</h2>
+                <table class="technique-table">
+                    <thead>
+                        <tr>
+                            <th>Technika</th>
+                            <th>Popis</th>
+                            <th>Příklad použití</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="technique-name">Glittering generalities</span></td>
+                            <td>Emotivní slova bez konkrétního obsahu</td>
+                            <td>"Svoboda", "patriotismus", "pokrok" - bez vysvětlení</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Name calling</span></td>
+                            <td>Hanlivé nálepkování oponentů</td>
+                            <td>"Liberální elity", "zasněný idealista", "populista"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Card stacking</span></td>
+                            <td>Výběr pouze potvrzujících faktů</td>
+                            <td>Zveřejnění jen pozitivních/negativních statistik</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Bandwagon</span></td>
+                            <td>"Všichni to dělají, připoj se taky"</td>
+                            <td>"10 milionů lidí už používá..."</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Plain folks</span></td>
+                            <td>"Jsem jako vy, obyčejný člověk"</td>
+                            <td>Politik v džínách na farmě (i když je milionář)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Testimonial</span></td>
+                            <td>Využití celebrity k podpoře</td>
+                            <td>Sportovec propagující produkt, kterému nerozumí</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Transfer</span></td>
+                            <td>Přenos symbolů s emocionálním nábojem</td>
+                            <td>Použití vlajky, kříže, symbolu pro legitimizaci</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Fear mongering</span></td>
+                            <td>Systematické vyvolávání strachu</td>
+                            <td>"Imigranti zničí naši kulturu!"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Scapegoating</span></td>
+                            <td>Hledání obětního beránka</td>
+                            <td>"Za všechno můžou ..." (jedna skupina)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Loaded language</span></td>
+                            <td>Emotivně nabitá slova</td>
+                            <td>"Osvobození" vs "invaze", "Boj za svobodu" vs "terorismus"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Repetition</span></td>
+                            <td>Neustálé opakování zprávy</td>
+                            <td>"Čím častěji lež opakujete, tím spíše ji lidé uvěří"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Minimization</span></td>
+                            <td>Bagatelizace problémů</td>
+                            <td>"To není tak vážné", "Jsou horší věci"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Whataboutism</span></td>
+                            <td>"A co ..." - odvádění pozornosti</td>
+                            <td>"A co USA dělaly v..." (při kritice jiného státu)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- DEZINFORMACE -->
+            <div class="cheatsheet-section" id="dezinfo">
+                <h2>🎯 Dezinformační taktiky</h2>
+                <table class="technique-table">
+                    <thead>
+                        <tr>
+                            <th>Technika</th>
+                            <th>Popis</th>
+                            <th>Příklad použití</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="technique-name">Astroturfing</span></td>
+                            <td>Falešná masová podpora pomocí botů</td>
+                            <td>Tisíce falešných profilů šíří stejnou zprávu</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Flooding</span></td>
+                            <td>Zahlcení informačního prostoru</td>
+                            <td>Zveřejnění tisíců zpráv, aby se ztratila pravda v šumu</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Bot amplification</span></td>
+                            <td>Použití botů k amplifikaci zprávy</td>
+                            <td>Automatické retweety, aby vypadal trend</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Sockpuppeting</span></td>
+                            <td>Jeden člověk = mnoho falešných identit</td>
+                            <td>Diskuze, kde jedna osoba hraje 10 různých lidí</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Sealioning</span></td>
+                            <td>Zdánlivě zdvořilé, ale vyčerpávající dotazy</td>
+                            <td>"Můžete mi to dokázat?" (100x po sobě)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Deep fakes</span></td>
+                            <td>AI generované falešné video/audio</td>
+                            <td>Falešné video politika říkajícího něco, co neřekl</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Synthetic media</span></td>
+                            <td>Manipulované fotky, videa</td>
+                            <td>Upravené fotky jako "důkaz"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Coordinated inauthentic behavior</span></td>
+                            <td>Koordinované šíření ze zahraničí</td>
+                            <td>Trollové farmy v různých zemích šíří stejnou narraci</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Manipulating trending</span></td>
+                            <td>Gaming algoritmů pro trendy</td>
+                            <td>Koordinované použití hashtagu pro zviditelnění</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Information laundering</span></td>
+                            <td>Legitimizace falešné info přes "věrohodný" zdroj</td>
+                            <td>Fake news → blog → mainstream média jako zdroj</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Gish gallop</span></td>
+                            <td>Záplava argumentů bez možnosti odpovědi</td>
+                            <td>20 nepodložených tvrzení za 2 minuty</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Conspiracy amplification</span></td>
+                            <td>Využití konspiračních teorií</td>
+                            <td>"Deep state", "Gates čipuje lidi"</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">Selective context removal</span></td>
+                            <td>Vytržení z kontextu</td>
+                            <td>Citát upravený, aby znamenal opak</td>
+                        </tr>
+                        <tr>
+                            <td><span class="technique-name">False flag operations</span></td>
+                            <td>Fingování útoku pro obviňění protivníka</td>
+                            <td>Vlastní akce předstíraná jako nepřátelský útok</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- OBRANA -->
+            <div class="defense-box" id="obrana">
+                <h3>🛡️ OBRANA PROTI MANIPULACI</h3>
+                
+                <h4 style="font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem;">Klíčové otázky:</h4>
+                <ul>
+                    <li><strong>Kdo to říká?</strong> - Je zdroj důvěryhodný?</li>
+                    <li><strong>Proč to říká?</strong> - Jaké má motivace?</li>
+                    <li><strong>Jaké důkazy předkládá?</strong> - Jsou ověřitelné?</li>
+                    <li><strong>Co vynechává?</strong> - Nevidím jen jednu stranu?</li>
+                    <li><strong>Jak mě to nutí cítit?</strong> - Apeluje na emoce?</li>
+                </ul>
+
+                <h4 style="font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem;">Ochranné postupy:</h4>
+                <ul>
+                    <li><strong>Zpomalit</strong> - nedávat okamžité reakce</li>
+                    <li><strong>Ověřovat z více zdrojů</strong> - cross-check</li>
+                    <li><strong>Všímat si emocí</strong> - pokud argument primárně vyvolává emoce, buďte ve střehu</li>
+                    <li><strong>Hledat originální zdroje</strong> - ne jen zprostředkované</li>
+                    <li><strong>Ptát se na logiku</strong> - dává argumentace smysl?</li>
+                    <li><strong>Dokumentovat</strong> - při gaslightingu zejména</li>
+                    <li><strong>Mluvit o tom</strong> - izolace pomáhá manipulátorům</li>
+                </ul>
+
+                <p style="margin-top: 1.5rem; font-style: italic; border-top: 2px solid var(--dark); padding-top: 1rem;">
+                    <strong>Poznámka:</strong> Tento cheat sheet slouží k identifikaci manipulačních technik, nikoliv k jejich použití. Znalost těchto technik je nástroj obrany, ne útoku.
+                </p>
+
+                <p style="margin-top: 1rem; font-size: 0.85rem;">
+                    <strong>Zdroje:</strong> bezfaulu.net, manipulatori.cz, yourlogicalfallacyis.com, Centrum občanského vzdělávání MUNI, Oxford Internet Institute, American Psychological Association, Data & Society Research Institute
+                </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <button class="nav-button" onclick="showScreen('home-screen')">← ZPĚT NA HLAVNÍ MENU</button>
+                <button class="nav-button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑ NAHORU</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FOULS = [
+            { name: "Ad Hominem", desc: "Útok na osobu místo argumentu. 'Nemůžeš mít pravdu, jsi přece idiot!'" },
+            { name: "Straw Man", desc: "Zkreslení argumentu protivníka do absurdní podoby, kterou je pak lehké vyvrátit." },
+            { name: "Slippery Slope", desc: "Tvrzení, že malá změna povede k extrémním následkům bez důkazů." },
+            { name: "False Dilemma", desc: "Prezentování pouze dvou možností, když jich existuje více." },
+            { name: "Appeal to Authority", desc: "Argumentace autoritou místo faktů. 'Einstein to řekl, takže je to pravda!'" },
+            { name: "Appeal to Emotion", desc: "Použití emocí (strach, soucit, hněv) místo logiky." },
+            { name: "Red Herring", desc: "Odvedení pozornosti od tématu irelevantní informací." },
+            { name: "Circular Reasoning", desc: "Závěr je totožný s předpokladem. 'Bible je pravdivá, protože to v Bibli píše.'" },
+            { name: "Tu Quoque", desc: "Whataboutism - 'Ty jsi taky dělal XY!' místo obrany vlastní pozice." },
+            { name: "Gish Gallop", desc: "Zahrnout protivníka spoustou slabých argumentů, které nemá čas vyvrátit." },
+            { name: "Moving Goalposts", desc: "Změna kritérií vítězství, když původní argumenty selžou." },
+            { name: "No True Scotsman", desc: "Ad hoc změna definice, aby vyloučila protiargumenty." },
+            { name: "Burden of Proof", desc: "Přesunutí důkazního břemene: 'Dokažte, že to není pravda!'" },
+            { name: "Anecdotal Evidence", desc: "Použití osobní zkušenosti jako univerzálního důkazu." },
+            { name: "Cherry Picking", desc: "Výběr jen těch dat, která podporují tvůj argument." },
+            { name: "False Equivalence", desc: "Srovnání dvou věcí, které nejsou srovnatelné." },
+            { name: "Appeal to Tradition", desc: "'Vždycky jsme to dělali takhle, tak proč měnit?'" },
+            { name: "Bandwagon", desc: "'Všichni to dělají, takže to musí být správně!'" },
+            { name: "Loaded Question", desc: "Otázka s předpokladem. 'Už jsi přestal bít svou ženu?'" },
+            { name: "Appeal to Nature", desc: "'Je to přírodní, takže je to dobré!' (Opium je taky přírodní)" },
+            { name: "Hasty Generalization", desc: "Závěr z příliš malého vzorku dat." },
+            { name: "Post Hoc", desc: "'A se stalo před B, takže A způsobilo B.' (Korelace ≠ kauzalita)" },
+            { name: "Texas Sharpshooter", desc: "Najít vzor v náhodných datech a tvrdit, že byl plánovaný." },
+            { name: "Appeal to Ignorance", desc: "'Nikdo neprokázal opak, takže mám pravdu!'" },
+            { name: "Personal Incredulity", desc: "'Nechápu to, takže to nemůže být pravda!'" }
+        ];
+
+        let bingoCard = [];
+        let crossedCells = new Set();
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function startDefender() {
+            const container = document.getElementById('defender-fouls');
+            container.innerHTML = '';
+            
+            const shuffled = shuffleArray(FOULS);
+            shuffled.forEach((foul, index) => {
+                const div = document.createElement('div');
+                div.className = 'foul-item';
+                div.innerHTML = `
+                    <label class="foul-checkbox">
+                        <input type="checkbox" id="def-${index}" onchange="toggleDefenderFoul(${index})">
+                        <div>
+                            <h3>${foul.name}</h3>
+                            <p>${foul.desc}</p>
+                        </div>
+                    </label>
+                `;
+                container.appendChild(div);
+            });
+
+            showScreen('defender-screen');
+        }
+
+        function toggleDefenderFoul(index) {
+            const checkbox = document.getElementById(`def-${index}`);
+            const item = checkbox.closest('.foul-item');
+            if (checkbox.checked) {
+                item.classList.add('used');
+            } else {
+                item.classList.remove('used');
+            }
+        }
+
+        function resetDefender() {
+            document.querySelectorAll('#defender-fouls input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+                cb.closest('.foul-item').classList.remove('used');
+            });
+        }
+
+        function startDetective() {
+            generateBingoCard();
+            showScreen('detective-screen');
+        }
+
+        function generateBingoCard() {
+            crossedCells.clear();
+            const shuffled = shuffleArray(FOULS);
+            bingoCard = shuffled.slice(0, 25);
+            
+            const grid = document.getElementById('bingo-grid');
+            grid.innerHTML = '';
+            
+            bingoCard.forEach((foul, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'bingo-cell';
+                cell.textContent = foul.name;
+                cell.onclick = () => toggleCell(index);
+                grid.appendChild(cell);
+            });
+
+            updateStats();
+        }
+
+        function toggleCell(index) {
+            const cells = document.querySelectorAll('.bingo-cell');
+            const cell = cells[index];
+            
+            if (crossedCells.has(index)) {
+                crossedCells.delete(index);
+                cell.classList.remove('crossed');
+            } else {
+                crossedCells.add(index);
+                cell.classList.add('crossed');
+                checkWin();
+            }
+            
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('crossed-count').textContent = crossedCells.size;
+            document.getElementById('remaining-count').textContent = 25 - crossedCells.size;
+        }
+
+        function checkWin() {
+            const lines = [
+                // Rows
+                [0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24],
+                // Columns
+                [0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24],
+                // Diagonals
+                [0,6,12,18,24], [4,8,12,16,20]
+            ];
+
+            for (let line of lines) {
+                if (line.every(i => crossedCells.has(i))) {
+                    showWin();
+                    return;
+                }
+            }
+        }
+
+        function showWin() {
+            const banner = document.createElement('div');
+            banner.className = 'win-banner';
+            banner.innerHTML = `
+                <h2>🎉 BINGO! 🎉</h2>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Gratuluji, detektive!</p>
+                <p style="margin-bottom: 2rem;">V příštím kole budeš<br><strong>OBHÁJCEM</strong>!</p>
+                <button class="nav-button" onclick="this.parentElement.remove(); resetBingo()">NOVÁ HRA</button>
+                <button class="nav-button" onclick="this.parentElement.remove(); showScreen('home-screen')">HLAVNÍ MENU</button>
+            `;
+            document.body.appendChild(banner);
+        }
+
+        function resetBingo() {
+            generateBingoCard();
+        }
+
+        // Populate all fouls reference
+        function populateAllFouls() {
+            const container = document.getElementById('all-fouls-list');
+            FOULS.forEach(foul => {
+                const div = document.createElement('div');
+                div.className = 'foul-item';
+                div.innerHTML = `
+                    <h3>${foul.name}</h3>
+                    <p>${foul.desc}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        populateAllFouls();
+    </script>
+</body>
+</html>

@@ -17,4 +17,7 @@ router.use('/qr', express.static(join(__dirname, '../../public/qr'), {
   index: 'index.html'
 }));
 
+router.use('/bingo', express.static(join(__dirname, '../../public/bingo'), {
+  index: 'index.html'
+}));
 export default router;
